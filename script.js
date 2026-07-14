@@ -1,32 +1,14 @@
-// Set the date we're counting down to (24 hours from now for demo purposes, or a fixed date)
-// Since it's a "scarcity" timer, it often resets or targets a near future time.
-// Let's set it to end of the day or 24h. Let's do a 48 hour countdown that loops or stays fixed.
-
-// For this demo, let's just make it hardcoded to match the image mostly, but ticking down.
-// Image says: 01 Days, 23 Hours, 34 Minutes, 56 Seconds.
-
-// Check for saved time in localStorage
-let savedTime = localStorage.getItem('growPlanTime');
-let duration;
-
-if (savedTime && !isNaN(savedTime)) {
-    duration = parseInt(savedTime);
-} else {
-    // Default: 1 day, 23 hours, 34 minutes, 56 seconds
-    duration = (1 * 24 * 60 * 60) + (23 * 60 * 60) + (34 * 60) + 56;
-}
+// Countdown timer: sempre inicia em 00D 00H 16MIN 46S para cada visitante
+let duration = (0 * 24 * 60 * 60) + (0 * 60 * 60) + (16 * 60) + 46;
 
 // Function to update timer
 function updateTimer() {
     duration--;
 
     if (duration < 0) {
-        // Reset if expired (looping for scarcity effect)
-        duration = (1 * 24 * 60 * 60) + (23 * 60 * 60) + (34 * 60) + 56;
+        // Reset se expirar
+        duration = (0 * 24 * 60 * 60) + (0 * 60 * 60) + (16 * 60) + 46;
     }
-
-    // Save to localStorage
-    localStorage.setItem('growPlanTime', duration);
 
     const days = Math.floor(duration / (24 * 60 * 60));
     const hours = Math.floor((duration % (24 * 60 * 60)) / (60 * 60));
@@ -45,8 +27,6 @@ setInterval(updateTimer, 1000);
 // Initialize immediately
 updateTimer();
 
-// Add some nice scroll reveal effects if not using a library like AOS (though I added data-aos in html, I'll simulate it with simple JS if user didn't load library, but I didn't include the library script. Let's add simple intersection observer).
-
 document.addEventListener('DOMContentLoaded', () => {
     const observerOptions = {
         threshold: 0.1
@@ -64,11 +44,111 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cards = document.querySelectorAll('.plan-card');
     cards.forEach(card => {
-        // Init styles for JS animation fallback
         card.style.opacity = '0';
         card.style.transform = 'translateY(30px)';
         card.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
-
         observer.observe(card);
     });
 });
+
+// =====================
+// Sales Notifications
+// =====================
+(function () {
+    const names = [
+        'Lucas M.', 'Fernanda S.', 'Gabriel O.', 'Beatriz L.', 'Rafael T.',
+        'Ana Clara R.', 'Matheus C.', 'Juliana P.', 'Pedro H.', 'Larissa V.',
+        'Diego A.', 'Camila N.', 'Bruno F.', 'Mariana K.', 'Thiago B.',
+        'Isabela G.', 'Victor R.', 'Letícia M.', 'Gustavo D.', 'Natalia E.',
+        'Felipe J.', 'Priscila W.', 'Rodrigo C.', 'Amanda X.', 'Leonardo Z.',
+        'Bianca H.', 'Henrique S.', 'Paloma T.', 'André L.', 'Vanessa Q.',
+        'Caio M.', 'Rebeca F.', 'Eduardo N.', 'Sabrina I.', 'Vinicius P.'
+    ];
+
+    // Grow Evolution aparece ~70% das vezes, Essencial ~30%
+    const plans = [
+        { name: 'GROW Evolution', weight: 7 },
+        { name: 'GROW Evolution', weight: 7 },
+        { name: 'GROW Evolution', weight: 7 },
+        { name: 'GROW Evolution', weight: 7 },
+        { name: 'GROW Evolution', weight: 7 },
+        { name: 'GROW Evolution', weight: 7 },
+        { name: 'GROW Evolution', weight: 7 },
+        { name: 'GROW Essencial', weight: 3 },
+        { name: 'GROW Essencial', weight: 3 },
+        { name: 'GROW Essencial', weight: 3 },
+    ];
+
+    const timeLabels = ['agora mesmo', 'há 1 min', 'há 2 min', 'há 3 min', 'há 5 min'];
+
+    let nameIndex = Math.floor(Math.random() * names.length);
+
+    function getNextName() {
+        const name = names[nameIndex % names.length];
+        nameIndex++;
+        return name;
+    }
+
+    function getRandomPlan() {
+        return plans[Math.floor(Math.random() * plans.length)].name;
+    }
+
+    function getRandomTime() {
+        return timeLabels[Math.floor(Math.random() * timeLabels.length)];
+    }
+
+    function showNotification() {
+        const container = document.getElementById('notif-container');
+        if (!container) return;
+
+        const name = getNextName();
+        const plan = getRandomPlan();
+        const time = getRandomTime();
+        const isEvolution = plan === 'GROW Evolution';
+
+        const notif = document.createElement('div');
+        notif.className = 'sale-notif';
+        notif.innerHTML = `
+            <div class="notif-icon">
+                <i class="fa-solid fa-bag-shopping"></i>
+            </div>
+            <div class="notif-body">
+                <div class="notif-name">${name} comprou</div>
+                <div class="notif-plan">Plano <span>${plan}</span></div>
+                <div class="notif-time">
+                    <div class="notif-dot"></div>
+                    ${time}
+                </div>
+            </div>
+        `;
+
+        container.appendChild(notif);
+
+        // Auto-remove after 5s with slide-out
+        setTimeout(() => {
+            notif.classList.add('hide');
+            setTimeout(() => {
+                if (notif.parentNode) notif.parentNode.removeChild(notif);
+            }, 420);
+        }, 5000);
+    }
+
+    // Intervalo aleatório entre 25 e 45 segundos para parecer mais real
+    function randomInterval() {
+        return Math.floor(Math.random() * (45000 - 25000 + 1)) + 25000;
+    }
+
+    function scheduleNext() {
+        setTimeout(() => {
+            showNotification();
+            scheduleNext();
+        }, randomInterval());
+    }
+
+    // Primeira notificação após 5 segundos
+    setTimeout(() => {
+        showNotification();
+        scheduleNext();
+    }, 5000);
+})();
+
